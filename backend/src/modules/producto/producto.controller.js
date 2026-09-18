@@ -29,3 +29,11 @@ export async function getProducto(req, res, next) {
     next(err);
   }
 }
+
+export async function getStock(req, res, next) {
+  try {
+    ok(res, await productoService.getStock(req.query.buscar));
+  } catch (err) {
+    next(err);
+  }
+}

@@ -19,3 +19,7 @@ export async function findById(id) {
   }
   return producto;
 }
+
+export async function getStock(buscar) {
+  return productoModel.findStock(buscar);
+}
