@@ -8,3 +8,7 @@ export const createProductoSchema = z.object({
     .positive('El precio debe ser mayor a 0')
     .max(9999999999.99),
 });
+
+export const stockQuerySchema = z.object({
+  buscar: z.string().trim().max(150).optional(),
+});
