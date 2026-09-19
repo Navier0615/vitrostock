@@ -1,10 +1,10 @@
 import { Router } from 'express';
+import productoRoutes from './modules/producto/producto.routes.js';
 
 const router = Router();
 
-// Cada módulo se registra aquí. Ejemplo:
-// import productoRoutes from './modules/producto/producto.routes.js';
-// router.use('/productos', productoRoutes);
+// Cada módulo se registra aquí.
+router.use('/productos', productoRoutes);
 
 import cuentasCobrarRoutes from "./modules/cuentas-cobrar/cuentas-cobrar.routes.js";
 
