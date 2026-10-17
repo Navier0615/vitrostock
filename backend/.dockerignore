@@ -1,0 +1,10 @@
+# Evita que archivos locales innecesarios o con secretos terminen dentro de la imagen
+node_modules
+npm-debug.log
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+Dockerfile
+README.md
