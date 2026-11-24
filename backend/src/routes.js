@@ -4,6 +4,7 @@ import productoRoutes from './modules/producto/producto.routes.js';
 import proveedorRoutes from './modules/proveedor/proveedor.routes.js';
 import cuentaPagarRoutes from './modules/cuenta-pagar/cuenta-pagar.routes.js';
 import cuentasCobrarRoutes from "./modules/cuentas-cobrar/cuentas-cobrar.routes.js";
+import clienteRoutes from './modules/cliente/cliente.routes.js';
 
 const router = Router();
 
@@ -13,5 +14,6 @@ router.use('/cuentas-pagar', cuentaPagarRoutes);
 router.use('/productos', productoRoutes);
 router.get('/health', (req, res) => res.json({ ok: true, data: 'VitroStock API viva' }));
 router.use("/cuentas-cobrar", cuentasCobrarRoutes);
+router.use('/clientes', clienteRoutes);
 
 export default router;
