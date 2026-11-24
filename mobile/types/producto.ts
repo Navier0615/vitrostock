@@ -15,4 +15,10 @@ export interface NuevoProducto {
   categoria: string;
   unidad_medida: string;
   precio_unitario: number;
+  stock_inicial?: number;
+}
+
+export interface NuevaEntrada {
+  cantidad: number;
+  motivo?: string;
 }
