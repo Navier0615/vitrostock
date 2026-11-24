@@ -19,7 +19,9 @@ export default function TabBar<T extends string>({ tabs, activa, onCambiar }: Pr
         const seleccionada = tab.key === activa;
         return (
           <Pressable key={tab.key} style={styles.tab} onPress={() => onCambiar(tab.key)}>
-            <Text style={[styles.texto, seleccionada && styles.textoActivo]}>{tab.label}</Text>
+            <Text style={[styles.texto, seleccionada && styles.textoActivo]} numberOfLines={1}>
+              {tab.label}
+            </Text>
             <View style={[styles.indicador, seleccionada && styles.indicadorActivo]} />
           </Pressable>
         );
@@ -41,7 +43,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   texto: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#777',
   },
   textoActivo: {

@@ -6,19 +6,29 @@ import TabBar, { Tab } from './components/TabBar';
 import ClienteDetalleScreen from './screens/ClienteDetalleScreen';
 import ClientesScreen from './screens/ClientesScreen';
 import CuentasCobrarScreen from './screens/CuentasCobrarScreen';
+import CuentasPagarScreen from './screens/CuentasPagarScreen';
 import NuevaCuentaCobrarScreen from './screens/NuevaCuentaCobrarScreen';
+import NuevaCuentaPagarScreen from './screens/NuevaCuentaPagarScreen';
 import NuevoClienteScreen from './screens/NuevoClienteScreen';
 import NuevoProductoScreen from './screens/NuevoProductoScreen';
+import NuevoProveedorScreen from './screens/NuevoProveedorScreen';
 import ProductoDetalleScreen from './screens/ProductoDetalleScreen';
 import ProductosScreen from './screens/ProductosScreen';
+import ProveedorDetalleScreen from './screens/ProveedorDetalleScreen';
+import ProveedoresScreen from './screens/ProveedoresScreen';
 
 // Navegación simple con estado (sin librerías extra): una pestaña activa y una pantalla dentro de ella.
-type Modulo = 'productos' | 'clientes' | 'cuentasCobrar';
+type Modulo = 'productos' | 'proveedores' | 'cuentasPagar' | 'clientes' | 'cuentasCobrar';
 
 type Pantalla =
   | { nombre: 'productos' }
   | { nombre: 'nuevoProducto' }
   | { nombre: 'detalleProducto'; id: number }
+  | { nombre: 'proveedores' }
+  | { nombre: 'nuevoProveedor' }
+  | { nombre: 'detalleProveedor'; id: number }
+  | { nombre: 'cuentasPagar' }
+  | { nombre: 'nuevaCuentaPagar'; proveedorId?: number; volverA: Pantalla }
   | { nombre: 'clientes' }
   | { nombre: 'nuevoCliente' }
   | { nombre: 'detalleCliente'; id: number }
@@ -27,6 +37,8 @@ type Pantalla =
 
 const TABS: Tab<Modulo>[] = [
   { key: 'productos', label: 'Inventario' },
+  { key: 'proveedores', label: 'Proveedores' },
+  { key: 'cuentasPagar', label: 'Por pagar' },
   { key: 'clientes', label: 'Clientes' },
   { key: 'cuentasCobrar', label: 'Por cobrar' },
 ];
@@ -35,6 +47,11 @@ const TITULOS: Record<Pantalla['nombre'], string> = {
   productos: 'Inventario',
   nuevoProducto: 'Nuevo producto',
   detalleProducto: 'Detalle del producto',
+  proveedores: 'Proveedores',
+  nuevoProveedor: 'Nuevo proveedor',
+  detalleProveedor: 'Detalle del proveedor',
+  cuentasPagar: 'Cuentas por pagar',
+  nuevaCuentaPagar: 'Nueva cuenta por pagar',
   clientes: 'Clientes',
   nuevoCliente: 'Nuevo cliente',
   detalleCliente: 'Detalle del cliente',
@@ -55,7 +72,11 @@ export default function App() {
   }
 
   function volver() {
-    setPantalla(pantalla.nombre === 'nuevaCuentaCobrar' ? pantalla.volverA : inicioModulo(modulo));
+    if (pantalla.nombre === 'nuevaCuentaPagar' || pantalla.nombre === 'nuevaCuentaCobrar') {
+      setPantalla(pantalla.volverA);
+    } else {
+      setPantalla(inicioModulo(modulo));
+    }
   }
 
   return (
@@ -70,6 +91,7 @@ export default function App() {
       </View>
 
       <View style={styles.contenido}>
+        {/* Inventario */}
         {pantalla.nombre === 'productos' && (
           <ProductosScreen
             onNuevo={() => setPantalla({ nombre: 'nuevoProducto' })}
@@ -79,6 +101,30 @@ export default function App() {
         {pantalla.nombre === 'nuevoProducto' && <NuevoProductoScreen onGuardado={volver} onCancelar={volver} />}
         {pantalla.nombre === 'detalleProducto' && <ProductoDetalleScreen id={pantalla.id} />}
 
+        {/* Proveedores y cuentas por pagar */}
+        {pantalla.nombre === 'proveedores' && (
+          <ProveedoresScreen
+            onNuevo={() => setPantalla({ nombre: 'nuevoProveedor' })}
+            onVerDetalle={(id) => setPantalla({ nombre: 'detalleProveedor', id })}
+          />
+        )}
+        {pantalla.nombre === 'nuevoProveedor' && <NuevoProveedorScreen onGuardado={volver} onCancelar={volver} />}
+        {pantalla.nombre === 'detalleProveedor' && (
+          <ProveedorDetalleScreen
+            id={pantalla.id}
+            onNuevaCuenta={(proveedorId) =>
+              setPantalla({ nombre: 'nuevaCuentaPagar', proveedorId, volverA: pantalla })
+            }
+          />
+        )}
+        {pantalla.nombre === 'cuentasPagar' && (
+          <CuentasPagarScreen onNueva={() => setPantalla({ nombre: 'nuevaCuentaPagar', volverA: pantalla })} />
+        )}
+        {pantalla.nombre === 'nuevaCuentaPagar' && (
+          <NuevaCuentaPagarScreen proveedorInicial={pantalla.proveedorId} onGuardado={volver} onCancelar={volver} />
+        )}
+
+        {/* Clientes y cuentas por cobrar */}
         {pantalla.nombre === 'clientes' && (
           <ClientesScreen
             onNuevo={() => setPantalla({ nombre: 'nuevoCliente' })}
@@ -92,7 +138,6 @@ export default function App() {
             onNuevaCuenta={(clienteId) => setPantalla({ nombre: 'nuevaCuentaCobrar', clienteId, volverA: pantalla })}
           />
         )}
-
         {pantalla.nombre === 'cuentasCobrar' && (
           <CuentasCobrarScreen onNueva={() => setPantalla({ nombre: 'nuevaCuentaCobrar', volverA: pantalla })} />
         )}
