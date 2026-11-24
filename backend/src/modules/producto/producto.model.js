@@ -7,14 +7,65 @@ function toProducto(row) {
   return row && { ...row, precio_unitario: Number(row.precio_unitario) };
 }
 
-export async function insert({ nombre, categoria, unidad_medida, precio_unitario }) {
-  const { rows } = await pool.query(
-    `INSERT INTO producto (nombre, categoria, unidad_medida, precio_unitario)
-     VALUES ($1, $2, $3, $4)
-     RETURNING ${COLUMNS}`,
-    [nombre, categoria, unidad_medida, precio_unitario],
-  );
-  return toProducto(rows[0]);
+// Crea el producto y, si trae stock inicial, deja registrada la entrada en movimiento_inventario.
+// Todo va en una transacción para que el stock y el historial no queden desfasados.
+export async function insert({ nombre, categoria, unidad_medida, precio_unitario, stock_inicial = 0 }) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      `INSERT INTO producto (nombre, categoria, unidad_medida, precio_unitario, stock_actual)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING ${COLUMNS}`,
+      [nombre, categoria, unidad_medida, precio_unitario, stock_inicial],
+    );
+    if (stock_inicial > 0) {
+      await client.query(
+        `INSERT INTO movimiento_inventario (producto_id, tipo, cantidad, motivo)
+         VALUES ($1, 'entrada', $2, 'Stock inicial')`,
+        [rows[0].id, stock_inicial],
+      );
+    }
+    await client.query('COMMIT');
+    return toProducto(rows[0]);
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+// Registra una entrada (HU02): guarda el movimiento y suma la cantidad al stock actual.
+// Devuelve el producto actualizado, o null si no existe.
+export async function registrarEntrada(id, { cantidad, motivo }) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      `UPDATE producto
+          SET stock_actual = stock_actual + $2
+        WHERE id = $1
+        RETURNING ${COLUMNS}`,
+      [id, cantidad],
+    );
+    if (!rows[0]) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+    await client.query(
+      `INSERT INTO movimiento_inventario (producto_id, tipo, cantidad, motivo)
+       VALUES ($1, 'entrada', $2, $3)`,
+      [id, cantidad, motivo || null],
+    );
+    await client.query('COMMIT');
+    return toProducto(rows[0]);
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 export async function findAll() {

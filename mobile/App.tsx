@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import TabBar, { Tab } from './components/TabBar';
 import ClienteDetalleScreen from './screens/ClienteDetalleScreen';
@@ -59,7 +60,18 @@ const TITULOS: Record<Pantalla['nombre'], string> = {
   nuevaCuentaCobrar: 'Nueva cuenta por cobrar',
 };
 
+// En Android la app se dibuja de borde a borde: sin estos márgenes la barra de pestañas
+// queda debajo de los botones de navegación del sistema y no se puede tocar.
 export default function App() {
+  return (
+    <SafeAreaProvider>
+      <Contenido />
+    </SafeAreaProvider>
+  );
+}
+
+function Contenido() {
+  const insets = useSafeAreaInsets();
   const [modulo, setModulo] = useState<Modulo>('productos');
   const [pantalla, setPantalla] = useState<Pantalla>({ nombre: 'productos' });
 
@@ -81,7 +93,7 @@ export default function App() {
 
   return (
     <View style={styles.safe}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         {!esInicio && (
           <Pressable onPress={volver} hitSlop={10}>
             <Text style={styles.volver}>‹ Volver</Text>
@@ -146,7 +158,7 @@ export default function App() {
         )}
       </View>
 
-      <TabBar tabs={TABS} activa={modulo} onCambiar={cambiarModulo} />
+      <TabBar tabs={TABS} activa={modulo} onCambiar={cambiarModulo} margenInferior={insets.bottom} />
       <StatusBar style="light" />
     </View>
   );
@@ -159,7 +171,6 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 16,
-    paddingTop: 36,
     paddingBottom: 14,
     backgroundColor: '#1F3A5F',
   },

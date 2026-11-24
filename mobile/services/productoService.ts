@@ -1,5 +1,5 @@
 import { API_URL } from '../config/api';
-import { NuevoProducto, Producto, ProductoStock } from '../types/producto';
+import { NuevaEntrada, NuevoProducto, Producto, ProductoStock } from '../types/producto';
 
 // El backend responde { ok: true, data } o { ok: false, error: { message, code } }.
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -35,6 +35,14 @@ export function obtenerProducto(id: number) {
 
 export function crearProducto(data: NuevoProducto) {
   return request<Producto>('/productos', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+// Suma la cantidad al stock del producto y devuelve el producto actualizado.
+export function registrarEntrada(id: number, data: NuevaEntrada) {
+  return request<Producto>(`/productos/${id}/entradas`, {
     method: 'POST',
     body: JSON.stringify(data),
   });

@@ -9,12 +9,13 @@ interface Props {
   onCancelar: () => void;
 }
 
-// Registrar producto. El stock inicia en 0 (lo define el backend).
+// Registrar producto. Se puede indicar con cuánto stock arranca (si se deja vacío, inicia en 0).
 export default function NuevoProductoScreen({ onGuardado, onCancelar }: Props) {
   const [nombre, setNombre] = useState('');
   const [categoria, setCategoria] = useState('');
   const [unidad, setUnidad] = useState('');
   const [precio, setPrecio] = useState('');
+  const [stockInicial, setStockInicial] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,6 +25,10 @@ export default function NuevoProductoScreen({ onGuardado, onCancelar }: Props) {
     if (!unidad.trim()) return 'La unidad de medida es obligatoria';
     const valor = Number(precio.replace(',', '.'));
     if (!precio.trim() || Number.isNaN(valor) || valor <= 0) return 'El precio debe ser un número mayor a 0';
+    if (stockInicial.trim()) {
+      const stock = Number(stockInicial);
+      if (!Number.isInteger(stock) || stock < 0) return 'El stock inicial debe ser un número entero de 0 en adelante';
+    }
     return null;
   }
 
@@ -38,13 +43,14 @@ export default function NuevoProductoScreen({ onGuardado, onCancelar }: Props) {
   async function guardar() {
     setGuardando(true);
     try {
-      await crearProducto({
+      const producto = await crearProducto({
         nombre: nombre.trim(),
         categoria: categoria.trim(),
         unidad_medida: unidad.trim(),
         precio_unitario: Number(precio.replace(',', '.')),
+        stock_inicial: stockInicial.trim() ? Number(stockInicial) : 0,
       });
-      avisar('Producto registrado', 'El producto se creó con stock 0.');
+      avisar('Producto registrado', `El producto se creó con ${producto.stock_actual} ${producto.unidad_medida} en stock.`);
       onGuardado();
     } catch (e) {
       setError((e as Error).message);
@@ -64,6 +70,13 @@ export default function NuevoProductoScreen({ onGuardado, onCancelar }: Props) {
         onChangeText={setPrecio}
         placeholder="Ej. 85000"
         keyboardType="decimal-pad"
+      />
+      <Campo
+        label="Stock inicial (opcional)"
+        value={stockInicial}
+        onChangeText={setStockInicial}
+        placeholder="Cantidad que ya tienes, ej. 20"
+        keyboardType="number-pad"
       />
 
       {error && <Text style={styles.error}>{error}</Text>}
@@ -85,7 +98,7 @@ interface CampoProps {
   value: string;
   onChangeText: (texto: string) => void;
   placeholder?: string;
-  keyboardType?: 'default' | 'decimal-pad';
+  keyboardType?: 'default' | 'decimal-pad' | 'number-pad';
 }
 
 function Campo({ label, keyboardType = 'default', ...props }: CampoProps) {

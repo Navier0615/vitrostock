@@ -37,3 +37,16 @@ export async function getStock(req, res, next) {
     next(err);
   }
 }
+
+export async function postEntrada(req, res, next) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return fail(res, 'El id debe ser un entero positivo', 400, 'VALIDATION_ERROR');
+  }
+  try {
+    ok(res, await productoService.registrarEntrada(id, req.body), 201);
+  } catch (err) {
+    if (err.status === 404) return fail(res, err.message, 404, err.code);
+    next(err);
+  }
+}
