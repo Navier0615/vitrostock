@@ -1,5 +1,12 @@
 import { pool } from '../../config/db.js';
 
+// Consulta base: incluye el nombre del cliente para mostrarlo en la app.
+const SELECT_CON_CLIENTE = `
+  SELECT cc.id, cc.cliente_id, cc.monto, cc.fecha, cc.estado, c.nombre AS cliente_nombre
+    FROM cuenta_por_cobrar cc
+    JOIN cliente c ON c.id = cc.cliente_id
+`;
+
 // Crear una nueva cuenta por cobrar
 export async function create({ cliente_id, monto, fecha }) {
   const query = fecha
@@ -14,7 +21,7 @@ export async function create({ cliente_id, monto, fecha }) {
 // Listar todas las cuentas por cobrar
 export async function findAll() {
   const { rows } = await pool.query(
-    `SELECT * FROM cuenta_por_cobrar ORDER BY fecha DESC`
+    `${SELECT_CON_CLIENTE} ORDER BY cc.fecha DESC, cc.id DESC`
   );
   return rows;
 }
@@ -22,7 +29,7 @@ export async function findAll() {
 // Listar cuentas por cobrar de un cliente específico
 export async function findByCliente(cliente_id) {
   const { rows } = await pool.query(
-    `SELECT * FROM cuenta_por_cobrar WHERE cliente_id = $1 ORDER BY fecha DESC`,
+    `${SELECT_CON_CLIENTE} WHERE cc.cliente_id = $1 ORDER BY cc.fecha DESC, cc.id DESC`,
     [cliente_id]
   );
   return rows;

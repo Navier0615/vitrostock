@@ -25,6 +25,11 @@ export async function marcarComoPagada(id) {
     error.statusCode = 404;
     throw error;
   }
+  if (cuenta.estado === 'pagado') {
+    const error = new Error('La cuenta ya está marcada como pagada.');
+    error.statusCode = 400;
+    throw error;
+  }
   return cuentasCobrarModel.updateEstado(id, 'pagado');
 }
 
