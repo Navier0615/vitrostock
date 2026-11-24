@@ -9,12 +9,14 @@ interface Props<T extends string> {
   tabs: Tab<T>[];
   activa: T;
   onCambiar: (key: T) => void;
+  // Espacio de la barra de navegación del sistema (botones o gestos) para no quedar debajo de ella.
+  margenInferior?: number;
 }
 
 // Barra inferior para cambiar entre módulos de la app.
-export default function TabBar<T extends string>({ tabs, activa, onCambiar }: Props<T>) {
+export default function TabBar<T extends string>({ tabs, activa, onCambiar, margenInferior = 0 }: Props<T>) {
   return (
-    <View style={styles.barra}>
+    <View style={[styles.barra, { paddingBottom: margenInferior }]}>
       {tabs.map((tab) => {
         const seleccionada = tab.key === activa;
         return (
