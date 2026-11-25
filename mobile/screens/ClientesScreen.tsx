@@ -1,7 +1,11 @@
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 
+import ContactoItem from '../components/ContactoItem';
+import EstadoVacio from '../components/EstadoVacio';
 import FAB from '../components/FAB';
+import MensajeError from '../components/MensajeError';
 import { useClientes } from '../hooks/useClientes';
+import { colores, espacio, tipografia } from '../theme';
 
 interface Props {
   onNuevo: () => void;
@@ -13,34 +17,40 @@ export default function ClientesScreen({ onNuevo, onVerDetalle }: Props) {
 
   return (
     <View style={styles.container}>
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <MensajeError mensaje={error} />}
+
+      {clientes.length > 0 && (
+        <Text style={styles.contador}>
+          {clientes.length} {clientes.length === 1 ? 'cliente' : 'clientes'}
+        </Text>
+      )}
 
       {cargando && clientes.length === 0 ? (
-        <ActivityIndicator style={{ marginTop: 40 }} size="large" />
+        <ActivityIndicator style={{ marginTop: 40 }} size="large" color={colores.primario} />
       ) : (
         <FlatList
           data={clientes}
-          keyExtractor={(c) => String(c.id)}
+          keyExtractor={(item) => String(item.id)}
           refreshing={cargando}
           onRefresh={recargar}
-          contentContainerStyle={{ paddingBottom: 90 }}
+          contentContainerStyle={{ paddingBottom: 100 }}
           renderItem={({ item }) => (
-            <Pressable
-              onPress={() => onVerDetalle(item.id)}
-              style={({ pressed }) => [styles.card, pressed && { opacity: 0.7 }]}
-            >
-              <Text style={styles.nombre}>{item.nombre}</Text>
-              <Text style={styles.telefono}>{item.telefono || 'Sin teléfono'}</Text>
-            </Pressable>
+            <ContactoItem nombre={item.nombre} telefono={item.telefono} onPress={() => onVerDetalle(item.id)} />
           )}
           ListEmptyComponent={
-            !error ? <Text style={styles.vacio}>Aún no hay clientes registrados.</Text> : undefined
+            !error ? (
+              <EstadoVacio
+                icono="people-outline"
+                titulo="Aún no hay clientes"
+                mensaje="Toca «Cliente» para registrar el primero."
+              />
+            ) : undefined
           }
         />
       )}
 
-      <FAB label="↻" position="left" color="#6C757D" onPress={recargar} />
-      <FAB label="+ Cliente" onPress={onNuevo} />
+      <FAB icono="refresh" position="left" color={colores.neutro} onPress={recargar} />
+      <FAB icono="add" label="Cliente" onPress={onNuevo} />
     </View>
   );
 }
@@ -48,35 +58,11 @@ export default function ClientesScreen({ onNuevo, onVerDetalle }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: espacio.lg,
   },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  nombre: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  telefono: {
-    fontSize: 13,
-    color: '#666',
-    marginTop: 2,
-  },
-  error: {
-    color: '#B00020',
-    marginBottom: 12,
-  },
-  vacio: {
-    textAlign: 'center',
-    color: '#777',
-    marginTop: 40,
+  contador: {
+    ...tipografia.etiqueta,
+    marginBottom: espacio.sm,
+    marginLeft: espacio.xs,
   },
 });

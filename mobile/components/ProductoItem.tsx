@@ -1,6 +1,9 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { colores, espacio, radio, STOCK_BAJO, tarjeta, tipografia } from '../theme';
 import { ProductoStock } from '../types/producto';
+import Insignia from './Insignia';
 
 interface Props {
   producto: ProductoStock;
@@ -9,18 +12,26 @@ interface Props {
 
 export default function ProductoItem({ producto, onPress }: Props) {
   const sinStock = producto.stock_actual <= 0;
+  const stockBajo = !sinStock && producto.stock_actual <= STOCK_BAJO;
+  const colorStock = sinStock ? colores.peligro : stockBajo ? colores.advertencia : colores.exito;
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && { opacity: 0.7 }]}
-    >
-      <View style={styles.info}>
-        <Text style={styles.nombre}>{producto.nombre}</Text>
-        <Text style={styles.categoria}>{producto.categoria}</Text>
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.presionado]}>
+      <View style={styles.icono}>
+        <Ionicons name="cube-outline" size={22} color={colores.primario} />
       </View>
-      <View style={[styles.stock, sinStock ? styles.stockVacio : styles.stockOk]}>
-        <Text style={styles.stockNumero}>{producto.stock_actual}</Text>
+
+      <View style={styles.info}>
+        <Text style={tipografia.subtitulo} numberOfLines={1}>
+          {producto.nombre}
+        </Text>
+        <Text style={[tipografia.secundario, styles.categoria]}>{producto.categoria}</Text>
+        {sinStock && <Insignia texto="Agotado" tipo="peligro" icono="close-circle" />}
+        {stockBajo && <Insignia texto="Stock bajo" tipo="advertencia" icono="warning" />}
+      </View>
+
+      <View style={styles.stock}>
+        <Text style={[styles.stockNumero, { color: colorStock }]}>{producto.stock_actual}</Text>
         <Text style={styles.stockUnidad}>{producto.unidad_medida}</Text>
       </View>
     </Pressable>
@@ -29,49 +40,42 @@ export default function ProductoItem({ producto, onPress }: Props) {
 
 const styles = StyleSheet.create({
   card: {
+    ...tarjeta,
+    padding: espacio.md + 2,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 2,
+    gap: espacio.md,
+    marginBottom: espacio.sm + 2,
+  },
+  presionado: {
+    opacity: 0.75,
+    transform: [{ scale: 0.99 }],
+  },
+  icono: {
+    width: 44,
+    height: 44,
+    borderRadius: radio.md,
+    backgroundColor: colores.primarioSuave,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   info: {
     flex: 1,
-  },
-  nombre: {
-    fontSize: 16,
-    fontWeight: '600',
+    gap: 3,
   },
   categoria: {
-    fontSize: 13,
-    color: '#666',
-    marginTop: 2,
+    marginBottom: 1,
   },
   stock: {
-    alignItems: 'center',
-    minWidth: 64,
-    borderRadius: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-  },
-  stockOk: {
-    backgroundColor: '#E6F4EA',
-  },
-  stockVacio: {
-    backgroundColor: '#FDE8E8',
+    alignItems: 'flex-end',
+    minWidth: 56,
   },
   stockNumero: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '800',
   },
   stockUnidad: {
-    fontSize: 11,
-    color: '#555',
+    fontSize: 12,
+    color: colores.textoSecundario,
   },
 });

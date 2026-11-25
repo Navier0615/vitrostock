@@ -1,9 +1,14 @@
 import { useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 
 import CuentaCobrarItem from '../components/CuentaCobrarItem';
+import EstadoVacio from '../components/EstadoVacio';
 import FAB from '../components/FAB';
+import Filtros, { OpcionFiltro } from '../components/Filtros';
+import MensajeError from '../components/MensajeError';
+import TarjetaResumen from '../components/TarjetaResumen';
 import { useCuentasCobrar } from '../hooks/useCuentasCobrar';
+import { colores, espacio } from '../theme';
 import { EstadoCuentaCobrar } from '../types/cuentaCobrar';
 import { avisar, confirmar } from '../utils/confirmar';
 import { formatearMoneda } from '../utils/formato';
@@ -12,7 +17,7 @@ interface Props {
   onNueva: () => void;
 }
 
-const FILTROS: { label: string; valor?: EstadoCuentaCobrar }[] = [
+const FILTROS: OpcionFiltro<EstadoCuentaCobrar>[] = [
   { label: 'Pendientes', valor: 'pendiente' },
   { label: 'Cobradas', valor: 'pagado' },
   { label: 'Todas' },
@@ -35,39 +40,42 @@ export default function CuentasCobrarScreen({ onNueva }: Props) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.filtros}>
-        {FILTROS.map((f) => {
-          const activo = f.valor === estado;
-          return (
-            <Pressable key={f.label} onPress={() => setEstado(f.valor)} style={[styles.chip, activo && styles.chipActivo]}>
-              <Text style={[styles.chipTexto, activo && styles.chipTextoActivo]}>{f.label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      <Filtros opciones={FILTROS} valor={estado} onCambiar={setEstado} />
 
-      <Text style={styles.total}>
-        Total por cobrar: <Text style={styles.totalValor}>{formatearMoneda(totalPendiente)}</Text>
-      </Text>
+      <TarjetaResumen
+        icono="cash-outline"
+        etiqueta="Total por cobrar"
+        valor={formatearMoneda(totalPendiente)}
+        color={totalPendiente > 0 ? colores.advertencia : colores.exito}
+        fondoIcono={totalPendiente > 0 ? colores.advertenciaSuave : colores.exitoSuave}
+      />
 
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <MensajeError mensaje={error} />}
 
       {cargando && cuentas.length === 0 ? (
-        <ActivityIndicator style={{ marginTop: 40 }} size="large" />
+        <ActivityIndicator style={{ marginTop: 40 }} size="large" color={colores.primario} />
       ) : (
         <FlatList
           data={cuentas}
           keyExtractor={(c) => String(c.id)}
           refreshing={cargando}
           onRefresh={recargar}
-          contentContainerStyle={{ paddingBottom: 90 }}
+          contentContainerStyle={{ paddingBottom: 100 }}
           renderItem={({ item }) => <CuentaCobrarItem cuenta={item} onCobrar={() => onCobrar(item.id)} />}
-          ListEmptyComponent={!error ? <Text style={styles.vacio}>No hay cuentas para mostrar.</Text> : undefined}
+          ListEmptyComponent={
+            !error ? (
+              <EstadoVacio
+                icono="receipt-outline"
+                titulo="No hay cuentas para mostrar"
+                mensaje={estado === 'pendiente' ? 'Ningún cliente tiene pagos pendientes.' : undefined}
+              />
+            ) : undefined
+          }
         />
       )}
 
-      <FAB label="↻" position="left" color="#6C757D" onPress={recargar} />
-      <FAB label="+ Cuenta" onPress={onNueva} />
+      <FAB icono="refresh" position="left" color={colores.neutro} onPress={recargar} />
+      <FAB icono="add" label="Cuenta" onPress={onNueva} />
     </View>
   );
 }
@@ -75,45 +83,6 @@ export default function CuentasCobrarScreen({ onNueva }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-  },
-  filtros: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
-  },
-  chip: {
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#1F3A5F',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-  },
-  chipActivo: {
-    backgroundColor: '#1F3A5F',
-  },
-  chipTexto: {
-    color: '#1F3A5F',
-  },
-  chipTextoActivo: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  total: {
-    fontSize: 15,
-    marginBottom: 12,
-  },
-  totalValor: {
-    fontWeight: '700',
-    color: '#E67E22',
-  },
-  error: {
-    color: '#B00020',
-    marginBottom: 12,
-  },
-  vacio: {
-    textAlign: 'center',
-    color: '#777',
-    marginTop: 40,
+    padding: espacio.lg,
   },
 });
