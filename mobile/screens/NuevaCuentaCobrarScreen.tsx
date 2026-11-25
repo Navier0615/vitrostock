@@ -1,9 +1,12 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { BotonesFormulario, Campo, Etiqueta, formStyles } from '../components/Formulario';
+import MensajeError from '../components/MensajeError';
 import { useClientes } from '../hooks/useClientes';
 import { crearCuentaCobrar } from '../services/cuentaCobrarService';
+import { colores, espacio, radio } from '../theme';
 import { avisar, confirmar } from '../utils/confirmar';
 import { formatearMoneda, hoyISO } from '../utils/formato';
 
@@ -37,10 +40,8 @@ export default function NuevaCuentaCobrarScreen({ clienteInicial, onGuardado, on
 
     const cliente = clientes.find((c) => c.id === clienteId);
     const valor = Number(monto.replace(',', '.'));
-    confirmar(
-      'Registrar cuenta por cobrar',
-      `¿Registrar que ${cliente?.nombre} debe ${formatearMoneda(valor)}?`,
-      () => guardar(valor),
+    confirmar('Registrar cuenta por cobrar', `¿Registrar que ${cliente?.nombre} debe ${formatearMoneda(valor)}?`, () =>
+      guardar(valor),
     );
   }
 
@@ -59,28 +60,48 @@ export default function NuevaCuentaCobrarScreen({ clienteInicial, onGuardado, on
 
   return (
     <ScrollView contentContainerStyle={formStyles.container}>
-      <Etiqueta>Cliente</Etiqueta>
-      {cargando ? (
-        <ActivityIndicator style={{ marginVertical: 12 }} />
-      ) : clientes.length === 0 ? (
-        <Text style={styles.aviso}>Primero registra un cliente en la pestaña Clientes.</Text>
-      ) : (
-        <View style={styles.chips}>
-          {clientes.map((c) => {
-            const activo = c.id === clienteId;
-            return (
-              <Pressable key={c.id} onPress={() => setClienteId(c.id)} style={[styles.chip, activo && styles.chipActivo]}>
-                <Text style={[styles.chipTexto, activo && styles.chipTextoActivo]}>{c.nombre}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      )}
+      <View style={formStyles.tarjeta}>
+        <Etiqueta>Cliente</Etiqueta>
+        {cargando ? (
+          <ActivityIndicator style={{ marginVertical: 12 }} color={colores.primario} />
+        ) : clientes.length === 0 ? (
+          <Text style={styles.aviso}>Primero registra un cliente en la pestaña Clientes.</Text>
+        ) : (
+          <View style={styles.chips}>
+            {clientes.map((c) => {
+              const activo = c.id === clienteId;
+              return (
+                <Pressable
+                  key={c.id}
+                  onPress={() => setClienteId(c.id)}
+                  style={[styles.chip, activo && styles.chipActivo]}
+                >
+                  {activo && <Ionicons name="checkmark" size={14} color="#fff" />}
+                  <Text style={[styles.chipTexto, activo && styles.chipTextoActivo]}>{c.nombre}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
 
-      <Campo label="Monto" value={monto} onChangeText={setMonto} placeholder="Ej. 850000" keyboardType="decimal-pad" />
-      <Campo label="Fecha (AAAA-MM-DD)" value={fecha} onChangeText={setFecha} placeholder={hoyISO()} />
+        <Campo
+          label="Monto"
+          value={monto}
+          onChangeText={setMonto}
+          placeholder="Ej. 850000"
+          keyboardType="decimal-pad"
+          icono="cash-outline"
+        />
+        <Campo
+          label="Fecha (AAAA-MM-DD)"
+          value={fecha}
+          onChangeText={setFecha}
+          placeholder={hoyISO()}
+          icono="calendar-outline"
+        />
+      </View>
 
-      {error && <Text style={formStyles.error}>{error}</Text>}
+      {error && <MensajeError mensaje={error} />}
 
       <BotonesFormulario guardando={guardando} onGuardar={onGuardar} onCancelar={onCancelar} />
     </ScrollView>
@@ -91,32 +112,37 @@ const styles = StyleSheet.create({
   chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 14,
+    gap: espacio.sm,
+    marginBottom: espacio.lg,
   },
   chip: {
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#17A2B8',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    backgroundColor: '#fff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espacio.xs,
+    borderRadius: radio.completo,
+    borderWidth: 1.5,
+    borderColor: colores.borde,
+    paddingVertical: espacio.sm - 1,
+    paddingHorizontal: espacio.md + 2,
+    backgroundColor: colores.superficie,
   },
   chipActivo: {
-    backgroundColor: '#17A2B8',
+    backgroundColor: colores.primario,
+    borderColor: colores.primario,
   },
   chipTexto: {
-    color: '#17A2B8',
+    color: colores.texto,
+    fontWeight: '500',
   },
   chipTextoActivo: {
     color: '#fff',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   aviso: {
-    color: '#856404',
-    backgroundColor: '#FFF3CD',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 14,
+    color: colores.advertencia,
+    backgroundColor: colores.advertenciaSuave,
+    borderRadius: radio.sm,
+    padding: espacio.md,
+    marginBottom: espacio.lg,
   },
 });

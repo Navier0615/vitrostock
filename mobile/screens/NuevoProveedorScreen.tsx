@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { ScrollView, Text } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { BotonesFormulario, Campo, formStyles } from '../components/Formulario';
+import MensajeError from '../components/MensajeError';
 import { crearProveedor } from '../services/proveedorService';
 import { avisar, confirmar } from '../utils/confirmar';
 
@@ -43,16 +44,25 @@ export default function NuevoProveedorScreen({ onGuardado, onCancelar }: Props) 
 
   return (
     <ScrollView contentContainerStyle={formStyles.container}>
-      <Campo label="Nombre" value={nombre} onChangeText={setNombre} placeholder="Ej. Aluminios del Cauca" />
-      <Campo
-        label="Teléfono (opcional)"
-        value={telefono}
-        onChangeText={setTelefono}
-        placeholder="Ej. 3001234567"
-        keyboardType="phone-pad"
-      />
+      <View style={formStyles.tarjeta}>
+        <Campo
+          label="Nombre"
+          value={nombre}
+          onChangeText={setNombre}
+          placeholder="Ej. Aluminios del Cauca"
+          icono="business-outline"
+        />
+        <Campo
+          label="Teléfono (opcional)"
+          value={telefono}
+          onChangeText={setTelefono}
+          placeholder="Ej. 3001234567"
+          keyboardType="phone-pad"
+          icono="call-outline"
+        />
+      </View>
 
-      {error && <Text style={formStyles.error}>{error}</Text>}
+      {error && <MensajeError mensaje={error} />}
 
       <BotonesFormulario guardando={guardando} onGuardar={onGuardar} onCancelar={onCancelar} />
     </ScrollView>

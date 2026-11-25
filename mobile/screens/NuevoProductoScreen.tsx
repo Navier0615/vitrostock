@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
+import { BotonesFormulario, Campo, formStyles } from '../components/Formulario';
+import MensajeError from '../components/MensajeError';
 import { crearProducto } from '../services/productoService';
 import { avisar, confirmar } from '../utils/confirmar';
 
@@ -50,7 +52,10 @@ export default function NuevoProductoScreen({ onGuardado, onCancelar }: Props) {
         precio_unitario: Number(precio.replace(',', '.')),
         stock_inicial: stockInicial.trim() ? Number(stockInicial) : 0,
       });
-      avisar('Producto registrado', `El producto se creó con ${producto.stock_actual} ${producto.unidad_medida} en stock.`);
+      avisar(
+        'Producto registrado',
+        `El producto se creó con ${producto.stock_actual} ${producto.unidad_medida} en stock.`,
+      );
       onGuardado();
     } catch (e) {
       setError((e as Error).message);
@@ -60,105 +65,50 @@ export default function NuevoProductoScreen({ onGuardado, onCancelar }: Props) {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Campo label="Nombre" value={nombre} onChangeText={setNombre} placeholder="Ej. Vidrio templado 6 mm" />
-      <Campo label="Categoría" value={categoria} onChangeText={setCategoria} placeholder="Ej. Vidrio" />
-      <Campo label="Unidad de medida" value={unidad} onChangeText={setUnidad} placeholder="Ej. m2, unidad, metro" />
-      <Campo
-        label="Precio unitario"
-        value={precio}
-        onChangeText={setPrecio}
-        placeholder="Ej. 85000"
-        keyboardType="decimal-pad"
-      />
-      <Campo
-        label="Stock inicial (opcional)"
-        value={stockInicial}
-        onChangeText={setStockInicial}
-        placeholder="Cantidad que ya tienes, ej. 20"
-        keyboardType="number-pad"
-      />
-
-      {error && <Text style={styles.error}>{error}</Text>}
-
-      <View style={styles.botones}>
-        <Pressable style={[styles.boton, styles.cancelar]} onPress={onCancelar} disabled={guardando}>
-          <Text style={styles.textoCancelar}>Cancelar</Text>
-        </Pressable>
-        <Pressable style={[styles.boton, styles.guardar]} onPress={onGuardar} disabled={guardando}>
-          {guardando ? <ActivityIndicator color="#fff" /> : <Text style={styles.textoGuardar}>Guardar</Text>}
-        </Pressable>
+    <ScrollView contentContainerStyle={formStyles.container}>
+      <View style={formStyles.tarjeta}>
+        <Campo
+          label="Nombre"
+          value={nombre}
+          onChangeText={setNombre}
+          placeholder="Ej. Vidrio templado 6 mm"
+          icono="cube-outline"
+        />
+        <Campo
+          label="Categoría"
+          value={categoria}
+          onChangeText={setCategoria}
+          placeholder="Ej. Vidrio"
+          icono="pricetag-outline"
+        />
+        <Campo
+          label="Unidad de medida"
+          value={unidad}
+          onChangeText={setUnidad}
+          placeholder="Ej. m2, unidad, metro"
+          icono="resize-outline"
+        />
+        <Campo
+          label="Precio unitario"
+          value={precio}
+          onChangeText={setPrecio}
+          placeholder="Ej. 85000"
+          keyboardType="decimal-pad"
+          icono="cash-outline"
+        />
+        <Campo
+          label="Stock inicial (opcional)"
+          value={stockInicial}
+          onChangeText={setStockInicial}
+          placeholder="Cantidad que ya tienes, ej. 20"
+          keyboardType="number-pad"
+          icono="layers-outline"
+        />
       </View>
+
+      {error && <MensajeError mensaje={error} />}
+
+      <BotonesFormulario guardando={guardando} onGuardar={onGuardar} onCancelar={onCancelar} />
     </ScrollView>
   );
 }
-
-interface CampoProps {
-  label: string;
-  value: string;
-  onChangeText: (texto: string) => void;
-  placeholder?: string;
-  keyboardType?: 'default' | 'decimal-pad' | 'number-pad';
-}
-
-function Campo({ label, keyboardType = 'default', ...props }: CampoProps) {
-  return (
-    <View style={styles.campo}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput style={styles.input} keyboardType={keyboardType} {...props} />
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-  },
-  campo: {
-    marginBottom: 14,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-  },
-  error: {
-    color: '#B00020',
-    marginBottom: 12,
-  },
-  botones: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-  },
-  boton: {
-    flex: 1,
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  cancelar: {
-    backgroundColor: '#E9ECEF',
-  },
-  guardar: {
-    backgroundColor: '#007AFF',
-  },
-  textoCancelar: {
-    fontSize: 16,
-    color: '#333',
-  },
-  textoGuardar: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: '600',
-  },
-});
