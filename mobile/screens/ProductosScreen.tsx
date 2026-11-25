@@ -1,8 +1,12 @@
-import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import EstadoVacio from '../components/EstadoVacio';
 import FAB from '../components/FAB';
+import MensajeError from '../components/MensajeError';
 import ProductoItem from '../components/ProductoItem';
 import { useStock } from '../hooks/useStock';
+import { colores, espacio, radio, sombra, tipografia } from '../theme';
 
 interface Props {
   onNuevo: () => void;
@@ -15,40 +19,63 @@ export default function ProductosScreen({ onNuevo, onVerDetalle }: Props) {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.buscador}
-        placeholder="Buscar producto por nombre"
-        value={buscar}
-        onChangeText={setBuscar}
-        autoCorrect={false}
-      />
+      <View style={styles.buscador}>
+        <Ionicons name="search" size={18} color={colores.textoTenue} />
+        <TextInput
+          style={styles.input}
+          placeholder="Buscar producto por nombre"
+          placeholderTextColor={colores.textoTenue}
+          value={buscar}
+          onChangeText={setBuscar}
+          autoCorrect={false}
+        />
+        {buscar.length > 0 && (
+          <Pressable onPress={() => setBuscar('')} hitSlop={8}>
+            <Ionicons name="close-circle" size={18} color={colores.textoTenue} />
+          </Pressable>
+        )}
+      </View>
 
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <MensajeError mensaje={error} />}
+
+      {productos.length > 0 && (
+        <Text style={styles.contador}>
+          {productos.length} {productos.length === 1 ? 'producto' : 'productos'}
+        </Text>
+      )}
 
       {cargando && productos.length === 0 ? (
-        <ActivityIndicator style={{ marginTop: 40 }} size="large" />
+        <ActivityIndicator style={{ marginTop: 40 }} size="large" color={colores.primario} />
       ) : (
         <FlatList
           data={productos}
           keyExtractor={(p) => String(p.id)}
-          renderItem={({ item }) => (
-            <ProductoItem producto={item} onPress={() => onVerDetalle(item.id)} />
-          )}
+          renderItem={({ item }) => <ProductoItem producto={item} onPress={() => onVerDetalle(item.id)} />}
           refreshing={cargando}
           onRefresh={recargar}
-          contentContainerStyle={{ paddingBottom: 90 }}
+          contentContainerStyle={{ paddingBottom: 100 }}
           ListEmptyComponent={
             !error ? (
-              <Text style={styles.vacio}>
-                {buscar ? 'Ningún producto coincide con la búsqueda.' : 'Aún no hay productos registrados.'}
-              </Text>
+              buscar ? (
+                <EstadoVacio
+                  icono="search-outline"
+                  titulo="Sin resultados"
+                  mensaje="Ningún producto coincide con la búsqueda."
+                />
+              ) : (
+                <EstadoVacio
+                  icono="cube-outline"
+                  titulo="Aún no hay productos"
+                  mensaje="Toca «Nuevo» para registrar el primero."
+                />
+              )
             ) : undefined
           }
         />
       )}
 
-      <FAB label="↻" position="left" color="#6C757D" onPress={recargar} />
-      <FAB label="+ Nuevo" onPress={onNuevo} />
+      <FAB icono="refresh" position="left" color={colores.neutro} onPress={recargar} />
+      <FAB icono="add" label="Nuevo" onPress={onNuevo} />
     </View>
   );
 }
@@ -56,25 +83,27 @@ export default function ProductosScreen({ onNuevo, onVerDetalle }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: espacio.lg,
   },
   buscador: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espacio.sm,
+    backgroundColor: colores.superficie,
+    borderRadius: radio.md,
+    paddingHorizontal: espacio.md,
+    marginBottom: espacio.md,
+    ...sombra,
+  },
+  input: {
+    flex: 1,
+    paddingVertical: espacio.md,
     fontSize: 16,
-    marginBottom: 12,
+    color: colores.texto,
   },
-  error: {
-    color: '#B00020',
-    marginBottom: 12,
-  },
-  vacio: {
-    textAlign: 'center',
-    color: '#777',
-    marginTop: 40,
+  contador: {
+    ...tipografia.etiqueta,
+    marginBottom: espacio.sm,
+    marginLeft: espacio.xs,
   },
 });

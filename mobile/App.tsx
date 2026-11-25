@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import Encabezado from './components/Encabezado';
 import TabBar, { Tab } from './components/TabBar';
 import ClienteDetalleScreen from './screens/ClienteDetalleScreen';
 import ClientesScreen from './screens/ClientesScreen';
@@ -17,6 +18,7 @@ import ProductoDetalleScreen from './screens/ProductoDetalleScreen';
 import ProductosScreen from './screens/ProductosScreen';
 import ProveedorDetalleScreen from './screens/ProveedorDetalleScreen';
 import ProveedoresScreen from './screens/ProveedoresScreen';
+import { colores } from './theme';
 
 // Navegación simple con estado (sin librerías extra): una pestaña activa y una pantalla dentro de ella.
 type Modulo = 'productos' | 'proveedores' | 'cuentasPagar' | 'clientes' | 'cuentasCobrar';
@@ -37,11 +39,11 @@ type Pantalla =
   | { nombre: 'nuevaCuentaCobrar'; clienteId?: number; volverA: Pantalla };
 
 const TABS: Tab<Modulo>[] = [
-  { key: 'productos', label: 'Inventario' },
-  { key: 'proveedores', label: 'Proveedores' },
-  { key: 'cuentasPagar', label: 'Por pagar' },
-  { key: 'clientes', label: 'Clientes' },
-  { key: 'cuentasCobrar', label: 'Por cobrar' },
+  { key: 'productos', label: 'Inventario', icono: 'cube-outline', iconoActivo: 'cube' },
+  { key: 'proveedores', label: 'Proveedores', icono: 'business-outline', iconoActivo: 'business' },
+  { key: 'cuentasPagar', label: 'Por pagar', icono: 'arrow-up-circle-outline', iconoActivo: 'arrow-up-circle' },
+  { key: 'clientes', label: 'Clientes', icono: 'people-outline', iconoActivo: 'people' },
+  { key: 'cuentasCobrar', label: 'Por cobrar', icono: 'arrow-down-circle-outline', iconoActivo: 'arrow-down-circle' },
 ];
 
 const TITULOS: Record<Pantalla['nombre'], string> = {
@@ -93,14 +95,11 @@ function Contenido() {
 
   return (
     <View style={styles.safe}>
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        {!esInicio && (
-          <Pressable onPress={volver} hitSlop={10}>
-            <Text style={styles.volver}>‹ Volver</Text>
-          </Pressable>
-        )}
-        <Text style={styles.titulo}>VitroStock · {TITULOS[pantalla.nombre]}</Text>
-      </View>
+      <Encabezado
+        titulo={TITULOS[pantalla.nombre]}
+        onVolver={esInicio ? undefined : volver}
+        margenSuperior={insets.top}
+      />
 
       <View style={styles.contenido}>
         {/* Inventario */}
@@ -167,25 +166,10 @@ function Contenido() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#1F3A5F',
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingBottom: 14,
-    backgroundColor: '#1F3A5F',
-  },
-  volver: {
-    color: '#BFD7FF',
-    fontSize: 16,
-    marginBottom: 4,
-  },
-  titulo: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
+    backgroundColor: colores.fondo,
   },
   contenido: {
     flex: 1,
-    backgroundColor: '#F2F4F7',
+    backgroundColor: colores.fondo,
   },
 });

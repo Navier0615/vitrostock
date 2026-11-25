@@ -1,26 +1,35 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
+import { colores, espacio, radio, sombraFuerte } from '../theme';
+import { NombreIcono } from '../types/icono';
+
 interface Props {
-  label: string;
+  label?: string;
+  icono?: NombreIcono;
   position?: 'left' | 'right';
   color?: string;
   onPress?: () => void;
   onLongPress?: () => void;
 }
 
-export default function FAB({ label, position = 'right', color = '#007AFF', onPress, onLongPress }: Props) {
+// Botón flotante reutilizable. Con solo icono es redondo; con texto toma forma de píldora.
+export default function FAB({ label, icono, position = 'right', color = colores.acento, onPress, onLongPress }: Props) {
+  const soloIcono = !label;
   return (
     <Pressable
       style={({ pressed }) => [
         styles.floatingButton,
+        soloIcono ? styles.redondo : styles.pildora,
         { backgroundColor: color },
         position === 'right' ? styles.positionRight : styles.positionLeft,
-        pressed ? { opacity: 0.7 } : { opacity: 1 },
+        pressed && styles.presionado,
       ]}
       onPress={onPress}
       onLongPress={onLongPress}
     >
-      <Text style={styles.label}>{label}</Text>
+      {icono && <Ionicons name={icono} size={soloIcono ? 24 : 20} color="#fff" />}
+      {label && <Text style={styles.label}>{label}</Text>}
     </Pressable>
   );
 }
@@ -28,23 +37,36 @@ export default function FAB({ label, position = 'right', color = '#007AFF', onPr
 const styles = StyleSheet.create({
   floatingButton: {
     position: 'absolute',
-    bottom: 20,
-    borderRadius: 15,
-    padding: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    bottom: espacio.lg + 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: espacio.xs + 2,
+    ...sombraFuerte,
+  },
+  redondo: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+  },
+  pildora: {
+    height: 52,
+    borderRadius: radio.completo,
+    paddingHorizontal: espacio.lg + 4,
   },
   positionRight: {
-    right: 20,
+    right: espacio.lg + 4,
   },
   positionLeft: {
-    left: 20,
+    left: espacio.lg + 4,
+  },
+  presionado: {
+    opacity: 0.85,
+    transform: [{ scale: 0.96 }],
   },
   label: {
-    color: 'white',
-    fontSize: 20,
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

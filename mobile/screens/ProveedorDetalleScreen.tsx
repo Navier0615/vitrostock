@@ -1,10 +1,15 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 
+import Avatar from '../components/Avatar';
 import CuentaPagarItem from '../components/CuentaPagarItem';
+import EstadoVacio from '../components/EstadoVacio';
 import FAB from '../components/FAB';
+import MensajeError from '../components/MensajeError';
 import { useCuentasPagar } from '../hooks/useCuentasPagar';
 import { obtenerProveedor } from '../services/proveedorService';
+import { colores, espacio, tarjeta, tipografia } from '../theme';
 import { Proveedor } from '../types/proveedor';
 import { avisar, confirmar } from '../utils/confirmar';
 import { formatearMoneda } from '../utils/formato';
@@ -36,38 +41,58 @@ export default function ProveedorDetalleScreen({ id, onNuevaCuenta }: Props) {
     });
   }
 
-  if (errorProveedor) return <Text style={styles.error}>{errorProveedor}</Text>;
-  if (!proveedor) return <ActivityIndicator style={{ marginTop: 40 }} size="large" />;
+  if (errorProveedor)
+    return (
+      <View style={styles.container}>
+        <MensajeError mensaje={errorProveedor} />
+      </View>
+    );
+  if (!proveedor) return <ActivityIndicator style={{ marginTop: 40 }} size="large" color={colores.primario} />;
+
+  const debe = totalPendiente > 0;
 
   return (
     <View style={styles.container}>
       <View style={styles.resumen}>
-        <Text style={styles.nombre}>{proveedor.nombre}</Text>
-        <Text style={styles.telefono}>{proveedor.telefono || 'Sin teléfono'}</Text>
-        <Text style={styles.totalLabel}>Total pendiente</Text>
-        <Text style={[styles.total, totalPendiente > 0 && styles.totalDeuda]}>
+        <View style={styles.perfil}>
+          <Avatar nombre={proveedor.nombre} tamano={56} />
+          <View style={styles.datos}>
+            <Text style={tipografia.titulo} numberOfLines={2}>
+              {proveedor.nombre}
+            </Text>
+            <View style={styles.telefono}>
+              <Ionicons name="call-outline" size={14} color={colores.textoSecundario} />
+              <Text style={tipografia.secundario}>{proveedor.telefono || 'Sin teléfono'}</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.separador} />
+
+        <Text style={tipografia.etiqueta}>Total pendiente</Text>
+        <Text style={[styles.total, { color: debe ? colores.peligro : colores.exito }]}>
           {formatearMoneda(totalPendiente)}
         </Text>
       </View>
 
       <Text style={styles.subtitulo}>Cuentas por pagar</Text>
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <MensajeError mensaje={error} />}
 
       <FlatList
         data={cuentas}
         keyExtractor={(c) => String(c.id)}
         refreshing={cargando}
         onRefresh={recargar}
-        contentContainerStyle={{ paddingBottom: 90 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
         renderItem={({ item }) => (
           <CuentaPagarItem cuenta={item} mostrarProveedor={false} onPagar={() => onPagar(item.id)} />
         )}
         ListEmptyComponent={
-          !cargando && !error ? <Text style={styles.vacio}>No hay cuentas registradas.</Text> : undefined
+          !cargando && !error ? <EstadoVacio icono="receipt-outline" titulo="No hay cuentas registradas" /> : undefined
         }
       />
 
-      <FAB label="+ Cuenta" onPress={() => onNuevaCuenta(id)} />
+      <FAB icono="add" label="Cuenta" onPress={() => onNuevaCuenta(id)} />
     </View>
   );
 }
@@ -75,48 +100,38 @@ export default function ProveedorDetalleScreen({ id, onNuevaCuenta }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: espacio.lg,
   },
   resumen: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    ...tarjeta,
+    marginBottom: espacio.lg,
   },
-  nombre: {
-    fontSize: 22,
-    fontWeight: 'bold',
+  perfil: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espacio.md,
+  },
+  datos: {
+    flex: 1,
   },
   telefono: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espacio.xs,
+    marginTop: 3,
   },
-  totalLabel: {
-    fontSize: 13,
-    color: '#666',
-    marginTop: 14,
+  separador: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colores.borde,
+    marginVertical: espacio.md + 2,
   },
   total: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#28A745',
-  },
-  totalDeuda: {
-    color: '#C0392B',
+    fontSize: 28,
+    fontWeight: '800',
+    marginTop: 2,
   },
   subtitulo: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 10,
-  },
-  error: {
-    color: '#B00020',
-    margin: 16,
-  },
-  vacio: {
-    textAlign: 'center',
-    color: '#777',
-    marginTop: 20,
+    ...tipografia.subtitulo,
+    marginBottom: espacio.sm + 2,
   },
 });

@@ -1,9 +1,16 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { BotonPrincipal, Campo } from '../components/Formulario';
+import Insignia from '../components/Insignia';
+import MensajeError from '../components/MensajeError';
 import { obtenerProducto, registrarEntrada } from '../services/productoService';
+import { colores, espacio, radio, STOCK_BAJO, tarjeta, tipografia } from '../theme';
+import { NombreIcono } from '../types/icono';
 import { Producto } from '../types/producto';
 import { avisar, confirmar } from '../utils/confirmar';
+import { formatearMoneda } from '../utils/formato';
 
 interface Props {
   id: number;
@@ -25,14 +32,17 @@ export default function ProductoDetalleScreen({ id }: Props) {
       .catch((e: Error) => setError(e.message));
   }, [id]);
 
-  if (error) return <Text style={styles.error}>{error}</Text>;
-  if (!producto) return <ActivityIndicator style={{ marginTop: 40 }} size="large" />;
+  if (error)
+    return (
+      <View style={styles.scroll}>
+        <MensajeError mensaje={error} />
+      </View>
+    );
+  if (!producto) return <ActivityIndicator style={{ marginTop: 40 }} size="large" color={colores.primario} />;
 
-  const precio = producto.precio_unitario.toLocaleString('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    maximumFractionDigits: 0,
-  });
+  const precio = formatearMoneda(producto.precio_unitario);
+  const sinStock = producto.stock_actual <= 0;
+  const stockBajo = !sinStock && producto.stock_actual <= STOCK_BAJO;
 
   function onRegistrar() {
     if (!producto) return;
@@ -42,10 +52,8 @@ export default function ProductoDetalleScreen({ id }: Props) {
       return;
     }
     setErrorEntrada(null);
-    confirmar(
-      'Registrar entrada',
-      `¿Sumar ${valor} ${producto.unidad_medida} al stock de "${producto.nombre}"?`,
-      () => guardarEntrada(valor),
+    confirmar('Registrar entrada', `¿Sumar ${valor} ${producto.unidad_medida} al stock de "${producto.nombre}"?`, () =>
+      guardarEntrada(valor),
     );
   }
 
@@ -67,49 +75,85 @@ export default function ProductoDetalleScreen({ id }: Props) {
   return (
     <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
       <View style={styles.tarjeta}>
-        <Text style={styles.nombre}>{producto.nombre}</Text>
-        <Fila label="Código" valor={`#${producto.id}`} />
-        <Fila label="Categoría" valor={producto.categoria} />
-        <Fila label="Unidad de medida" valor={producto.unidad_medida} />
-        <Fila label="Precio unitario" valor={precio} />
-        <Fila label="Stock actual" valor={`${producto.stock_actual} ${producto.unidad_medida}`} />
+        <View style={styles.cabecera}>
+          <View style={styles.iconoProducto}>
+            <Ionicons name="cube" size={28} color={colores.primario} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={tipografia.titulo}>{producto.nombre}</Text>
+            <Text style={tipografia.secundario}>Código #{producto.id}</Text>
+          </View>
+        </View>
+
+        <View style={styles.stockCaja}>
+          <View>
+            <Text style={tipografia.etiqueta}>Stock actual</Text>
+            <Text style={styles.stockNumero}>
+              {producto.stock_actual} <Text style={styles.stockUnidad}>{producto.unidad_medida}</Text>
+            </Text>
+          </View>
+          {sinStock ? (
+            <Insignia texto="Agotado" tipo="peligro" icono="close-circle" />
+          ) : stockBajo ? (
+            <Insignia texto="Stock bajo" tipo="advertencia" icono="warning" />
+          ) : (
+            <Insignia texto="Disponible" tipo="exito" icono="checkmark-circle" />
+          )}
+        </View>
+
+        <Fila icono="pricetag-outline" label="Categoría" valor={producto.categoria} />
+        <Fila icono="resize-outline" label="Unidad de medida" valor={producto.unidad_medida} />
+        <Fila icono="cash-outline" label="Precio unitario" valor={precio} ultima />
       </View>
 
       <View style={styles.tarjeta}>
-        <Text style={styles.subtitulo}>Registrar entrada de stock</Text>
+        <View style={styles.tituloSeccion}>
+          <Ionicons name="add-circle" size={22} color={colores.exito} />
+          <Text style={tipografia.titulo}>Registrar entrada de stock</Text>
+        </View>
         <Text style={styles.ayuda}>Úsalo cuando llegue mercancía: la cantidad se suma al stock actual.</Text>
 
-        <Text style={styles.label}>Cantidad ({producto.unidad_medida})</Text>
-        <TextInput
-          style={styles.input}
+        <Campo
+          label={`Cantidad (${producto.unidad_medida})`}
           value={cantidad}
           onChangeText={setCantidad}
           placeholder="Ej. 10"
           keyboardType="number-pad"
+          icono="layers-outline"
         />
-
-        <Text style={styles.label}>Motivo (opcional)</Text>
-        <TextInput
-          style={styles.input}
+        <Campo
+          label="Motivo (opcional)"
           value={motivo}
           onChangeText={setMotivo}
           placeholder="Ej. Compra a proveedor"
           maxLength={200}
+          icono="document-text-outline"
         />
 
-        {errorEntrada && <Text style={styles.errorEntrada}>{errorEntrada}</Text>}
+        {errorEntrada && <MensajeError mensaje={errorEntrada} />}
 
-        <Pressable style={styles.boton} onPress={onRegistrar} disabled={guardando}>
-          {guardando ? <ActivityIndicator color="#fff" /> : <Text style={styles.textoBoton}>Registrar entrada</Text>}
-        </Pressable>
+        <BotonPrincipal
+          texto="Registrar entrada"
+          icono="arrow-down-circle"
+          cargando={guardando}
+          onPress={onRegistrar}
+        />
       </View>
     </ScrollView>
   );
 }
 
-function Fila({ label, valor }: { label: string; valor: string }) {
+interface FilaProps {
+  icono: NombreIcono;
+  label: string;
+  valor: string;
+  ultima?: boolean;
+}
+
+function Fila({ icono, label, valor, ultima = false }: FilaProps) {
   return (
-    <View style={styles.fila}>
+    <View style={[styles.fila, ultima && { borderBottomWidth: 0 }]}>
+      <Ionicons name={icono} size={18} color={colores.textoTenue} />
       <Text style={styles.filaLabel}>{label}</Text>
       <Text style={styles.valor}>{valor}</Text>
     </View>
@@ -118,76 +162,72 @@ function Fila({ label, valor }: { label: string; valor: string }) {
 
 const styles = StyleSheet.create({
   scroll: {
-    padding: 16,
-    gap: 16,
+    padding: espacio.lg,
+    gap: espacio.lg,
   },
   tarjeta: {
-    padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    ...tarjeta,
   },
-  nombre: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 12,
+  cabecera: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espacio.md,
+    marginBottom: espacio.lg,
+  },
+  iconoProducto: {
+    width: 56,
+    height: 56,
+    borderRadius: radio.lg,
+    backgroundColor: colores.primarioSuave,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stockCaja: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colores.fondo,
+    borderRadius: radio.md,
+    padding: espacio.md + 2,
+    marginBottom: espacio.sm,
+  },
+  stockNumero: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: colores.texto,
+    marginTop: 2,
+  },
+  stockUnidad: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: colores.textoSecundario,
   },
   fila: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
+    alignItems: 'center',
+    gap: espacio.sm + 2,
+    paddingVertical: espacio.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#ddd',
+    borderBottomColor: colores.borde,
   },
   filaLabel: {
-    color: '#666',
+    flex: 1,
+    color: colores.textoSecundario,
     fontSize: 15,
   },
   valor: {
     fontSize: 15,
     fontWeight: '600',
+    color: colores.texto,
   },
-  subtitulo: {
-    fontSize: 17,
-    fontWeight: '700',
+  tituloSeccion: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espacio.sm,
   },
   ayuda: {
-    fontSize: 13,
-    color: '#666',
-    marginTop: 4,
-    marginBottom: 12,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    marginBottom: 14,
-  },
-  boton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  textoBoton: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: '600',
-  },
-  errorEntrada: {
-    color: '#B00020',
-    marginBottom: 12,
-  },
-  error: {
-    color: '#B00020',
-    margin: 16,
+    ...tipografia.secundario,
+    marginTop: espacio.xs,
+    marginBottom: espacio.lg,
   },
 });
